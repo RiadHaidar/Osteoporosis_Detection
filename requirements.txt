@@ -1,5 +1,5 @@
 streamlit
-tensorflow==2.8.0
+tensorflow==2.16.1
 keras==2.8.0
 pillow
 protobuf==3.20.3
