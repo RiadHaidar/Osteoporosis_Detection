@@ -1,0 +1,5 @@
+streamlit
+tensorflow==2.8.0
+keras==2.8.0
+pillow
+protobuf==3.20.3
