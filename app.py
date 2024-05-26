@@ -6,7 +6,18 @@ os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # Disable GPU
 import streamlit as st
 import numpy as np
 from keras.models import load_model
+from keras.layers import DepthwiseConv2D
 from PIL import Image, ImageOps
+
+# Custom DepthwiseConv2D class to handle 'groups' parameter
+class CustomDepthwiseConv2D(DepthwiseConv2D):
+    def __init__(self, *args, **kwargs):
+        if 'groups' in kwargs:
+            kwargs.pop('groups')
+        super().__init__(*args, **kwargs)
+
+# Register the custom object
+custom_objects = {'DepthwiseConv2D': CustomDepthwiseConv2D}
 
 # Define paths
 model_file_path = os.path.join(os.path.dirname(__file__), "keras_model.h5")
@@ -21,11 +32,20 @@ if not os.path.exists(labels_file_path):
     st.error("Failed to find the labels file 'labels.txt'")
     st.stop()
 
-# Load the model
-model = load_model(model_file_path, compile=False)
+# Load the model with custom objects
+try:
+    model = load_model(model_file_path, custom_objects=custom_objects, compile=False)
+except Exception as e:
+    st.error(f"Error loading model: {e}")
+    st.stop()
 
 # Load the class names
-class_names = [line.strip() for line in open(labels_file_path, "r").readlines()]
+try:
+    with open(labels_file_path, "r") as f:
+        class_names = [line.strip() for line in f.readlines()]
+except Exception as e:
+    st.error(f"Error loading labels: {e}")
+    st.stop()
 
 # Define a function to predict the class
 def predict(image):
@@ -63,7 +83,6 @@ if uploaded_file is not None:
         
         st.write(f"**Class**: {class_name}")
         st.write(f"**Confidence Score**: {confidence_score:.2f}")
-
 
     except Exception as e:
         st.error(f"Error processing the image: {e}")
